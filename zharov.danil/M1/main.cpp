@@ -1,13 +1,32 @@
+#include <algorithm>
 #include <iostream>
 #include <vector>
+#include <random>
 
 namespace zharov
 {
+  struct Point
+  {
+    double x, y;
+  };
+
   struct Circle
   {
     size_t r;
-    double x, y;
+    Point center;
   };
+
+  struct Canvas
+  {
+    Point left_lower;
+    Point right_upper;
+  };
+
+  Canvas getCanvas(const std::vector< Circle >& shapes);
+  std::pair< size_t, size_t > calcInside(const std::vector< Circle >& shapes, Canvas cv, size_t tests, size_t seed);
+  bool isInside(Point pt, const Circle& shape);
+  double getArea(size_t inside, size_t tests, Canvas cv);
+
 }
 
 int main(int argc, char** argv)
@@ -24,11 +43,11 @@ int main(int argc, char** argv)
   }
 
   long long threads = 0, tries = 0, seed = 0;
-  threads = std::atoll(argv[1]);
-  tries = std::atoll(argv[2]);
+  threads = std::stoll(argv[1]);
+  tries = std::stoll(argv[2]);
   if (argc == 4)
   {
-    seed = std::atoll(argv[3]);
+    seed = std::stoll(argv[3]);
   }
 
   if (threads <= 0 || tries <= 0 || seed < 0)
@@ -40,18 +59,79 @@ int main(int argc, char** argv)
   size_t skip = 0;
   zharov::Circle shape{0, 0, 0};
   std::vector< zharov::Circle > shapes;
-  while (std::cin >> shape.r >> skip >> shape.x >> shape.y)
+  while (std::cin >> shape.r)
   {
+    if (!(std::cin >> skip >> shape.center.x >> shape.center.y))
+    {
+      std::cerr << "bad input\n";
+      return 1;
+    }
     shapes.push_back(shape);
   }
-  if (!std::cin.eof())
+
+  zharov::Canvas cv = getCanvas(shapes);
+  std::pair< size_t, size_t > inside = zharov::calcInside(shapes, cv, tries, seed);
+  double area = zharov::getArea(inside.first, tries, cv);
+  double intersection_area = zharov::getArea(inside.second, tries, cv);
+
+  std::cout << area << " " << intersection_area << "\n";
+}
+
+zharov::Canvas zharov::getCanvas(const std::vector< Circle >& shapes)
+{
+  const Circle& first = shapes.front();
+  Canvas res;
+  res.left_lower.x = first.center.x - first.r;
+  res.left_lower.y = first.center.y - first.r;
+  res.right_upper.x = first.center.x + first.r;
+  res.right_upper.y = first.center.y + first.r;
+  for (auto i = shapes.cbegin() + 1; i != shapes.cend(); ++i)
   {
-    std::cerr << "bad input\n";
-    return 1;
+    res.left_lower.x = std::min(i->center.x - i->r, res.left_lower.x);
+    res.left_lower.y = std::min(i->center.y - i->r, res.left_lower.y);
+    res.right_upper.x = std::max(i->center.x + i->r, res.right_upper.x);
+    res.right_upper.y = std::max(i->center.y + i->r, res.right_upper.y);
+  }
+  return res;
+}
+
+std::pair< size_t, size_t > zharov::calcInside(
+    const std::vector< Circle >& shapes, Canvas cv, size_t tests, size_t seed)
+{
+  std::default_random_engine eng(seed);
+  std::uniform_real_distribution< double > dist_high(cv.left_lower.y, cv.right_upper.y);
+  std::uniform_real_distribution< double > dist_width(cv.left_lower.x, cv.right_upper.x);
+  size_t inside_each = 0, inside = 0;
+  for (size_t i = 0; i < tests; ++i)
+  {
+    Point pt{dist_width(eng), dist_high(eng)};
+    size_t count = 0;
+    for (auto j = shapes.cbegin(); j != shapes.cend(); ++j)
+    {
+      count += isInside(pt, *j);
+    }
+    if (count > 0)
+    {
+      ++inside;
+      if (count == shapes.size())
+      {
+        ++inside_each;
+      }
+    }
   }
 
-  for (auto i = shapes.cbegin(); i != shapes.cend(); ++i)
-  {
-    std::cout << i->r << " " << i->x << " " << i->y << "\n";
-  }
+  return {inside, inside_each};
+}
+
+bool zharov::isInside(Point pt, const Circle& shape)
+{
+  double dx = pt.x - shape.center.x;
+  double dy = pt.y - shape.center.y;
+  double r = shape.r;
+  return dx * dx + dy * dy <= r * r;
+}
+
+double zharov::getArea(size_t inside, size_t tests, Canvas cv)
+{
+  return ((cv.right_upper.x - cv.left_lower.x) * (cv.right_upper.y - cv.left_lower.y)) * inside / tests;
 }
