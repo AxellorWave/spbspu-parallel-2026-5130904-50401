@@ -79,6 +79,16 @@ int main(int argc, char** argv)
     }
     shapes.push_back(shape);
   }
+  if (!std::cin.eof())
+  {
+    std::cerr << "bad input\n";
+    return 1;
+  }
+  if (shapes.empty())
+  {
+    std::cout << 0 << " " << 0 << "\n";
+    return 0;
+  }
 
   zharov::Canvas cv = getCanvas(shapes);
   size_t inside = 0, each_inside = 0;
