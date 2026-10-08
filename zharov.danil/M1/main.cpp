@@ -2,6 +2,8 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <future>
+#include <thread>
 
 namespace zharov
 {
@@ -43,12 +45,21 @@ int main(int argc, char** argv)
   }
 
   long long threads = 0, tries = 0, seed = 0;
-  threads = std::stoll(argv[1]);
-  tries = std::stoll(argv[2]);
-  if (argc == 4)
+  try
   {
-    seed = std::stoll(argv[3]);
+    threads = std::min(std::stoll(argv[1]), 1000ll);
+    tries = std::stoll(argv[2]);
+    if (argc == 4)
+    {
+      seed = std::stoll(argv[3]);
+    }
   }
+  catch (...)
+  {
+    std::cerr << "incorrect args\n";
+    return 1;
+  }
+  threads = threads == 0 ? 1 : threads;
 
   if (threads <= 0 || tries <= 0 || seed < 0)
   {
@@ -70,9 +81,36 @@ int main(int argc, char** argv)
   }
 
   zharov::Canvas cv = getCanvas(shapes);
-  std::pair< size_t, size_t > inside = zharov::calcInside(shapes, cv, tries, seed);
-  double area = zharov::getArea(inside.first, tries, cv);
-  double intersection_area = zharov::getArea(inside.second, tries, cv);
+  size_t inside = 0, each_inside = 0;
+  try
+  {
+    std::vector< std::future< std::pair< size_t, size_t > > > results;
+    results.reserve(threads);
+    size_t th = static_cast< size_t >(threads);
+    size_t nums_on_thread = tries / th;
+    {
+      for (size_t i = 0; i < th - 1; ++i)
+      {
+        results.push_back(std::async(std::launch::async, zharov::calcInside, shapes, cv, nums_on_thread, seed++));
+      }
+      results.push_back(std::async(std::launch::async, zharov::calcInside, shapes, cv, nums_on_thread + tries % th, seed));
+
+      for (size_t i = 0; i < th; ++i)
+      {
+        std::pair< size_t, size_t > res = results[i].get();
+        inside += res.first;
+        each_inside += res.second;
+      }
+    }
+  }
+  catch (const std::exception& e)
+  {
+    std::cerr << e.what() << "\n";
+    return 1;
+  }
+
+  double area = zharov::getArea(inside, tries, cv);
+  double intersection_area = zharov::getArea(each_inside, tries, cv);
 
   std::cout << area << " " << intersection_area << "\n";
 }
