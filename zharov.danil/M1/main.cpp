@@ -3,7 +3,10 @@
 #include <vector>
 #include <random>
 #include <future>
-#include <thread>
+#include <cstddef>
+#include <utility>
+#include <string>
+#include <exception>
 
 namespace zharov
 {
@@ -33,25 +36,30 @@ namespace zharov
 
 int main(int argc, char** argv)
 {
-  if (argc < 3)
+  constexpr int min_args = 3;
+  constexpr int max_args = 4;
+  constexpr int tries_arg = 2;
+  constexpr int seed_arg = 3;
+  if (argc < min_args)
   {
     std::cerr << "not enough args\n";
     return 1;
   }
-  if (argc > 4)
+  if (argc > max_args)
   {
     std::cerr << "too many args\n";
     return 1;
   }
 
   long long threads = 0, tries = 0, seed = 0;
+  constexpr long long max_threads = 1000;
   try
   {
-    threads = std::min(std::stoll(argv[1]), 1000ll);
-    tries = std::stoll(argv[2]);
-    if (argc == 4)
+    threads = std::min(std::stoll(argv[1]), max_threads);
+    tries = std::stoll(argv[tries_arg]);
+    if (argc == max_args)
     {
-      seed = std::stoll(argv[3]);
+      seed = std::stoll(argv[seed_arg]);
     }
   }
   catch (...)
@@ -96,7 +104,7 @@ int main(int argc, char** argv)
   {
     std::vector< std::future< std::pair< size_t, size_t > > > results;
     results.reserve(threads);
-    size_t th = static_cast< size_t >(threads);
+    const size_t th = static_cast< size_t >(threads);
     size_t nums_on_thread = tries / th;
     {
       for (size_t i = 0; i < th - 1; ++i)
@@ -108,7 +116,7 @@ int main(int argc, char** argv)
 
       for (size_t i = 0; i < th; ++i)
       {
-        std::pair< size_t, size_t > res = results[i].get();
+        const std::pair< size_t, size_t > res = results[i].get();
         inside += res.first;
         each_inside += res.second;
       }
@@ -120,8 +128,8 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  double area = zharov::getArea(inside, tries, cv);
-  double intersection_area = zharov::getArea(each_inside, tries, cv);
+  const double area = zharov::getArea(inside, tries, cv);
+  const double intersection_area = zharov::getArea(each_inside, tries, cv);
 
   std::cout << area << " " << intersection_area << "\n";
 }
@@ -153,7 +161,7 @@ std::pair< size_t, size_t > zharov::calcInside(
   size_t inside_each = 0, inside = 0;
   for (size_t i = 0; i < tests; ++i)
   {
-    Point pt{dist_width(eng), dist_high(eng)};
+    const Point pt{dist_width(eng), dist_high(eng)};
     size_t count = 0;
     for (auto j = shapes.cbegin(); j != shapes.cend(); ++j)
     {
@@ -174,9 +182,9 @@ std::pair< size_t, size_t > zharov::calcInside(
 
 bool zharov::isInside(Point pt, const Circle& shape)
 {
-  double dx = pt.x - shape.center.x;
-  double dy = pt.y - shape.center.y;
-  double r = shape.r;
+  const double dx = pt.x - shape.center.x;
+  const double dy = pt.y - shape.center.y;
+  const double r = shape.r;
   return dx * dx + dy * dy <= r * r;
 }
 
