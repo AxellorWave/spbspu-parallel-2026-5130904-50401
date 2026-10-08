@@ -103,7 +103,8 @@ int main(int argc, char** argv)
       {
         results.push_back(std::async(std::launch::async, zharov::calcInside, shapes, cv, nums_on_thread, seed++));
       }
-      results.push_back(std::async(std::launch::async, zharov::calcInside, shapes, cv, nums_on_thread + tries % th, seed));
+      results.push_back(
+          std::async(std::launch::async, zharov::calcInside, shapes, cv, nums_on_thread + tries % th, seed));
 
       for (size_t i = 0; i < th; ++i)
       {
