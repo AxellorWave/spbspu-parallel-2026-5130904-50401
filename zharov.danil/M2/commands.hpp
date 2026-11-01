@@ -34,10 +34,10 @@ namespace zharov
 
   void createCircle(std::ostream& out, const Args& args, Context& ctx);
   void createSet(std::ostream& out, const Args& args, Context& ctx);
-  void showShape(std::ostream& out, const Args& args, Context& ctx);
-  void showSet(std::ostream& out, const Args& args, Context& ctx);
-  void showFrame(std::ostream& out, const Args& args, Context& ctx);
-  void showFrameSet(std::ostream& out, const Args& args, Context& ctx);
+  void showShape(std::ostream& out, const Args& args, const Context& ctx);
+  void showSet(std::ostream& out, const Args& args, const Context& ctx);
+  void showFrame(std::ostream& out, const Args& args, const Context& ctx);
+  void showFrameSet(std::ostream& out, const Args& args, const Context& ctx);
   void spawnProcess(std::ostream& out, const Args& args, Context& ctx);
   void startArea(std::ostream& out, const Args& args, Context& ctx);
   void showStatus(std::ostream& out, const Args& args, Context& ctx);
