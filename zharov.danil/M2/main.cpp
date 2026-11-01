@@ -1,17 +1,34 @@
 #include <exception>
 #include <iostream>
+#include <signal.h>
 #include <string>
 #include <unordered_map>
 #include "commands.hpp"
 
 int main()
 {
+  struct sigaction ignore = {};
+  ignore.sa_handler = SIG_IGN;
+  if (sigaction(SIGPIPE, &ignore, nullptr) < 0)
+  {
+    std::cerr << "Can not ignore SIGPIPE\n";
+    return 1;
+  }
+
   using cmd = void (*)(std::ostream&, const zharov::Args&, zharov::Context&);
   using constCmd = void (*)(std::ostream&, const zharov::Args&, const zharov::Context&);
   std::unordered_map< std::string, cmd > cmds;
   std::unordered_map< std::string, constCmd > constCmds;
   cmds["circle"] = zharov::createCircle;
+  cmds["set"] = zharov::createSet;
+  cmds["spawn"] = zharov::spawnProcess;
+  cmds["area-on"] = zharov::startArea;
+  cmds["status"] = zharov::showStatus;
+  cmds["wait"] = zharov::waitCalc;
   constCmds["show"] = zharov::showShape;
+  constCmds["showset"] = zharov::showSet;
+  constCmds["frame"] = zharov::showFrame;
+  constCmds["frameset"] = zharov::showFrameSet;
 
   zharov::Context ctx;
   std::string line;
