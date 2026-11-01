@@ -6,13 +6,14 @@
 size_t zharov::countInside(const std::vector< Circle >& shapes, Frame frame, size_t tries, size_t seed)
 {
   std::default_random_engine eng(seed);
-  std::uniform_real_distribution< double > dist_x(frame.left_lower.x, frame.right_upper.x);
-  std::uniform_real_distribution< double > dist_y(frame.left_lower.y, frame.right_upper.y);
+  const double range = static_cast< double >(eng.max() - eng.min());
+  const double kx = (frame.right_upper.x - frame.left_lower.x) / range;
+  const double ky = (frame.right_upper.y - frame.left_lower.y) / range;
   size_t inside = 0;
   for (size_t i = 0; i < tries; ++i)
   {
-    const double x = dist_x(eng);
-    const double y = dist_y(eng);
+    const double x = frame.left_lower.x + static_cast< double >(eng() - eng.min()) * kx;
+    const double y = frame.left_lower.y + static_cast< double >(eng() - eng.min()) * ky;
     bool covered = false;
     for (auto j = shapes.cbegin(); j != shapes.cend() && !covered; ++j)
     {
