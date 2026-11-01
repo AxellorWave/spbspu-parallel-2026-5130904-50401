@@ -10,7 +10,8 @@ namespace zharov
   {
     CALC,
     STATUS,
-    WAIT
+    WAIT,
+    STOP
   };
 
   enum class CalcState
